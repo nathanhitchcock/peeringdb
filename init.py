@@ -17,18 +17,13 @@ r = requests.get("https://peeringdb.com/api/net/" + str(net_id)).json()
 r_netixlan = r['data'][0]['netixlan_set']
 
 # Sort the array
-# r_netixlan_sorted = sorted(r_netixlan, key=lambda k: k['ix_id'])
 r_netixlan_sorted = sorted(r_netixlan, key=lambda k: k['name'])
 
 # Collect the total number of Peerings in the Dataset
 total_Peerings = len(r_netixlan_sorted)
 
-# Aggregate the total bandwidth [value] per ix_id [key]
-# NOTE: credit(https://stackoverflow.com/questions/18066269/group-by-and-aggregate-the-values-of-a-list-of-dictionaries-in-python/18068389)
-
-# Using 'ix_id' there are 49 unique peerings and using the name there are 52 unique peerings
-# TODO Correlate ix_id and pull in the name field alongside the calculation
-# kfunc = lambda d: d["ix_id"]
+# Aggregate the total bandwidth per Peering Group
+# Using 'd[ix_id]' there are 49 unique peerings and using the name there are 52 unique peerings
 kfunc = lambda d: d["name"]
 vfunc = lambda d: {k:v for k, v in d.items() if k.startswith("speed")}
 rfunc = lambda lst: sum((ct.Counter(d) for d in lst), ct.Counter())
@@ -44,16 +39,20 @@ total_Unique_Peerings = len(reduced_netixlan)
 total_speed = 0
 speed = 0
 
+# Format & Print the results
+print("List of Public Peerings \n")
 for net in r_netixlan_sorted:
     name = net['name']
     ix_id = net['ix_id']
     speed = net['speed']
     total_speed += speed
-    print(name, ix_id, speed)
+    print(name, ix_id, str(speed / 1000) + "GBs")
 
-# Format & Print the results
+total_speed = total_speed / 1000
+
+print("\n")
+print("Aggreate Speed Per Peering Group: \n" + str(reduced_netixlan))
+print("\n")
 print("Total Peerings: " + str(total_Peerings))
 print("Total Number of Unique Peerings: " + str(total_Unique_Peerings))
-# print("Sorted list of Peerings(ix_id): " + str(r_netixlan_sorted))
-print("Total Aggreate Speed for All Peerings: " + str(total_speed))
-print("Aggreate Speed Per Peering Group: " + str(reduced_netixlan))
+print("Total Aggreate Speed for All Peerings: " + str(total_speed) + "GBs")
