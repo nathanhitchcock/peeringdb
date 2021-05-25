@@ -5,10 +5,7 @@ import collections as ct
 import more_itertools as mit
 
 # Change this variable to adjust which PeeringDB NET_ID [not asn] this application looks for
-# TODO update function to request this info from the user
-# Rackspace (22)
-# Twitch(1956)
-net_id = 1956
+net_id = input("Please enter the desired PeeringDB NET_ID [not asn] to search: ")
 
 # Make a GET request to get the PeeringDB network information
 r = requests.get("https://peeringdb.com/api/net/" + str(net_id)).json()
