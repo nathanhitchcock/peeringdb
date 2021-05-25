@@ -8,6 +8,11 @@ r_netixlan = []
 r_netixlan_sorted = []
 reduced_netixlan = []
 
+def main():
+    net_id = collect_user_input()
+    r_netixlan_sorted = api_request(net_id)
+    reduced_netixlan = aggregate_speeds(r_netixlan_sorted)
+    print_results(r_netixlan, r_netixlan_sorted, reduced_netixlan)
 
 def collect_user_input():
     # Change this variable to adjust which PeeringDB NET_ID [not asn] this application looks for
@@ -71,8 +76,4 @@ def print_results(r_netixlan, r_netixlan_sorted, reduced_netixlan):
     print("Total Aggreate Speed for All Peerings: " + str(total_speed) + "GBs")
 
 if __name__ == '__main__':
-    net_id = collect_user_input()
-    r_netixlan_sorted = api_request(net_id)
-    print(r_netixlan_sorted)
-    reduced_netixlan = aggregate_speeds(r_netixlan_sorted)
-    print_results(r_netixlan, r_netixlan_sorted, reduced_netixlan)
+    main()
