@@ -4,52 +4,75 @@ import requests
 import collections as ct
 import more_itertools as mit
 
-# Change this variable to adjust which PeeringDB NET_ID [not asn] this application looks for
-net_id = input("Please enter the desired PeeringDB NET_ID [not asn] to search: ")
+r_netixlan = []
+r_netixlan_sorted = []
+reduced_netixlan = []
 
-# Make a GET request to get the PeeringDB network information
-r = requests.get("https://peeringdb.com/api/net/" + str(net_id)).json()
 
-# Populate the main variables from the base request
-r_netixlan = r['data'][0]['netixlan_set']
+def collect_user_input():
+    # Change this variable to adjust which PeeringDB NET_ID [not asn] this application looks for
+    net_id = input("Please enter the desired PeeringDB NET_ID [not asn] to search: ")
+    return net_id
 
-# Sort the array
-r_netixlan_sorted = sorted(r_netixlan, key=lambda k: k['name'])
+def api_request(net_id):
+    print(net_id)
+    # Make a GET request to get the PeeringDB network information
+    r = requests.get("https://peeringdb.com/api/net/" + str(net_id)).json()
 
-# Collect the total number of Peerings in the Dataset
-total_Peerings = len(r_netixlan_sorted)
+    # Populate the main variables from the base request
+    r_netixlan = r['data'][0]['netixlan_set']
 
-# Aggregate the total bandwidth per Peering Group
-# Using 'd[ix_id]' there are 49 unique peerings and using the name there are 52 unique peerings
-kfunc = lambda d: d["name"]
-vfunc = lambda d: {k:v for k, v in d.items() if k.startswith("speed")}
-rfunc = lambda lst: sum((ct.Counter(d) for d in lst), ct.Counter())
+    # Sort the array
+    r_netixlan_sorted = sorted(r_netixlan, key=lambda k: k['name'])
 
-# Build the reduced dictionary object
-reduced_netixlan = mit.map_reduce(r_netixlan_sorted, keyfunc=kfunc, valuefunc=vfunc, reducefunc=rfunc)
-reduced_netixlan
+    return r_netixlan_sorted
 
-# Display the number of Unique Peerings
-total_Unique_Peerings = len(reduced_netixlan)
+def aggregate_speeds(r_netixlan_sorted):
+    # Collect the total number of Peerings in the Dataset
+    #total_Peerings = len(r_netixlan_sorted)
 
-# Collect the Aggreate speed across all Peerings
-total_speed = 0
-speed = 0
+    # Aggregate the total bandwidth per Peering Group
+    # Using 'd[ix_id]' there are 49 unique peerings and using the name there are 52 unique peerings
+    kfunc = lambda d: d["name"]
+    vfunc = lambda d: {k:v for k, v in d.items() if k.startswith("speed")}
+    rfunc = lambda lst: sum((ct.Counter(d) for d in lst), ct.Counter())
 
-# Format & Print the results
-print("List of Public Peerings \n")
-for net in r_netixlan_sorted:
-    name = net['name']
-    ix_id = net['ix_id']
-    speed = net['speed']
-    total_speed += speed
-    print(name, ix_id, str(speed / 1000) + "GBs")
+    # Build the reduced dictionary object
+    reduced_netixlan = mit.map_reduce(r_netixlan_sorted, keyfunc=kfunc, valuefunc=vfunc, reducefunc=rfunc)
 
-total_speed = total_speed / 1000
+    return reduced_netixlan
 
-print("\n")
-print("Aggreate Speed Per Peering Group: \n" + str(reduced_netixlan))
-print("\n")
-print("Total Peerings: " + str(total_Peerings))
-print("Total Number of Unique Peerings: " + str(total_Unique_Peerings))
-print("Total Aggreate Speed for All Peerings: " + str(total_speed) + "GBs")
+
+def print_results(r_netixlan, r_netixlan_sorted, reduced_netixlan):
+    # Display the number of Unique Peerings
+    total_Unique_Peerings = len(reduced_netixlan)
+
+    # Collect the Aggreate speed across all Peerings
+    total_speed = 0
+    speed = 0
+    total_Peerings = len(r_netixlan_sorted)
+
+    # Format & Print the results
+    print("List of Public Peerings \n")
+    for net in r_netixlan_sorted:
+        name = net['name']
+        ix_id = net['ix_id']
+        speed = net['speed']
+        total_speed += speed
+        print(name, ix_id, str(speed / 1000) + "GBs")
+
+    total_speed = total_speed / 1000
+
+    print("\n")
+    print("Aggreate Speed Per Peering Group: \n" + str(reduced_netixlan))
+    print("\n")
+    print("Total Peerings: " + str(total_Peerings))
+    print("Total Number of Unique Peerings: " + str(total_Unique_Peerings))
+    print("Total Aggreate Speed for All Peerings: " + str(total_speed) + "GBs")
+
+if __name__ == '__main__':
+    net_id = collect_user_input()
+    r_netixlan_sorted = api_request(net_id)
+    print(r_netixlan_sorted)
+    reduced_netixlan = aggregate_speeds(r_netixlan_sorted)
+    print_results(r_netixlan, r_netixlan_sorted, reduced_netixlan)
